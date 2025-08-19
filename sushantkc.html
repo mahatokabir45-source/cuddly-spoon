@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Professional Productivity App</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;background:#f4f6f8;color:#333;transition:0.3s;}
+  body.dark{background:#1e1e1e;color:#f0f0f0;}
+
+  /* Splash Screen */
+  #splash{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#007bff,#00c6ff);display:flex;justify-content:center;align-items:center;flex-direction:column;color:white;font-size:24px;transition:opacity 0.5s;z-index:10;}
+  #splash h1{font-size:36px;margin-bottom:10px;}
+  #splash p{font-size:18px;margin-bottom:20px;text-align:center;max-width:300px;}
+  #splash button{padding:10px 20px;font-size:18px;border:none;border-radius:5px;cursor:pointer;background:white;color:#007bff;transition:0.3s;}
+  #splash button:hover{background:#e0e0e0;}
+
+  /* Header */
+  header{background:#007bff;color:white;padding:15px;text-align:center;display:flex;justify-content:space-between;align-items:center;}
+  header.dark{background:#111;}
+  header button{padding:5px 10px;font-size:14px;margin-left:5px;cursor:pointer;border:none;border-radius:4px;transition:0.3s;}
+  header button:hover{opacity:0.8;}
+
+  /* Apps Menu */
+  .apps-menu{display:none;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:15px;padding:15px;position:relative;}
+  .app-card{background:white;border-radius:12px;padding:20px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.1);cursor:pointer;transition:transform 0.3s,box-shadow 0.3s;}
+  .app-card.dark{background:#2b2b2b;}
+  .app-card:hover{transform:scale(1.05);box-shadow:0 6px 15px rgba(0,0,0,0.3);}
+  .app-card i{font-size:28px;display:block;margin-bottom:10px;}
+  .app-card span{font-size:16px;}
+  .app-card.calendar{background:#007bff;color:white;}
+  .app-card.notes{background:#ffc107;color:#333;}
+  .app-card.reminders{background:#dc3545;color:white;}
+  .app-card.goals{background:#28a745;color:white;}
+
+  /* Tooltip for feature tour */
+  #tourTooltip{position:absolute;padding:10px 15px;background:#007bff;color:white;border-radius:8px;font-size:14px;display:none;z-index:15;pointer-events:none;transition:0.3s;opacity:0;}
+  #tourTooltip.dark{background:#1e90ff;}
+
+  /* App Module */
+  .app-module{display:none;padding:15px;animation:fadeIn 0.5s;}
+  .card{background:white;border-radius:8px;padding:15px;box-shadow:0 2px 6px rgba(0,0,0,0.1);}
+  .card.dark{background:#2b2b2b;}
+  input,textarea,button{width:100%;padding:6px;margin-bottom:5px;border-radius:4px;border:1px solid #ccc;}
+  button{cursor:pointer;border:none;background:#007bff;color:white;transition:0.3s;}
+  button:hover{background:#0056b3;}
+  .dark button{background:#1e90ff;color:#fff;}
+  .dark button:hover{background:#1067b3;}
+  ul{list-style:none;padding-left:0;}
+  li{background:#f1f1f1;padding:6px;border-radius:4px;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center;cursor:grab;transition:0.2s;}
+  li.dark{background:#3b3b3b;}
+  li:hover{background:#e0e0e0;}
+  li.dark:hover{background:#505050;}
+  li.completed{text-decoration:line-through;opacity:0.7;}
+  .stats{font-size:14px;margin-top:5px;}
+
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <h1>💼 Productivity App</h1>
+  <p>Manage your notes, reminders, goals, and calendar efficiently!</p>
+  <button onclick="enterDashboard()">Enter Dashboard</button>
+</div>
+
+<!-- Header -->
+<header>
+  <div>Professional Productivity Dashboard</div>
+  <div>
+    <button id="themeBtn">🌙 / ☀️</button>
+    <button onclick="exitDashboard()" style="background:#dc3545;">Exit App</button>
+  </div>
+</header>
+
+<!-- Apps Menu -->
+<div class="apps-menu" id="appsMenu">
+  <div class="app-card calendar" onclick="openApp('calendarModule')"><i>📅</i><span>Calendar</span></div>
+  <div class="app-card notes" onclick="openApp('notesModule')"><i>📝</i><span>Notes</span></div>
+  <div class="app-card reminders" onclick="openApp('reminderModule')"><i>⏰</i><span>Reminders</span></div>
+  <div class="app-card goals" onclick="openApp('goalsModule')"><i>🎯</i><span>Goals</span></div>
+</div>
+
+<!-- Feature Tour Tooltip -->
+<div id="tourTooltip"></div>
+
+<!-- App Modules -->
+<div class="app-module" id="calendarModule">
+  <button onclick="backToMenu()">⬅ Back</button>
+  <div class="card" id="calendarCard">
+    <h2>📅 Calendar</h2>
+    <div id="calendar" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;"></div>
+  </div>
+</div>
+
+<div class="app-module" id="notesModule">
+  <button onclick="backToMenu()">⬅ Back</button>
+  <div class="card">
+    <h2>📝 Quick Notes <span class="stats" id="notesStats"></span></h2>
+    <textarea id="noteInput" placeholder="Write a note..."></textarea>
+    <button onclick="addNote()">Add Note</button>
+    <ul id="notesList"></ul>
+  </div>
+</div>
+
+<div class="app-module" id="reminderModule">
+  <button onclick="backToMenu()">⬅ Back</button>
+  <div class="card">
+    <h2>⏰ Reminders <span class="stats" id="reminderStats"></span></h2>
+    <input type="text" id="reminderInput" placeholder="New reminder...">
+    <button onclick="addReminder()">Add Reminder</button>
+    <ul id="reminderList"></ul>
+  </div>
+</div>
+
+<div class="app-module" id="goalsModule">
+  <button onclick="backToMenu()">⬅ Back</button>
+  <div class="card">
+    <h2>🎯 Daily Goals <span class="stats" id="goalsStats"></span></h2>
+    <input type="text" id="goalInput" placeholder="Add a goal...">
+    <button onclick="addGoal()">Add Goal</button>
+    <ul id="goalList"></ul>
+  </div>
+</div>
+
+<script>
+/* ---------- Splash & Apps Menu ---------- */
+function enterDashboard(){
+  document.getElementById('splash').style.opacity='0';
+  setTimeout(()=>{
+    document.getElementById('splash').style.display='none';
+    document.getElementById('appsMenu').style.display='grid';
+    startFeatureTour();
+  },500);
+}
+function exitDashboard(){
+  // Hide all modules and menu
+  document.getElementById('appsMenu').style.display = 'none';
+  document.querySelectorAll('.app-module').forEach(m => m.style.display = 'none');
+
+  // Show splash properly
+  const splash = document.getElementById('splash');
+  splash.style.display = 'flex';
+  splash.style.opacity = '1'; // reset opacity in case it was faded out
+
+  // Reset tour index (optional)
+  tourIndex = 0;
+}
+/* ---------- Theme Toggle ---------- */
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  document.body.classList.toggle('dark');
+  document.querySelectorAll('.card').forEach(c=>c.classList.toggle('dark'));
+  document.querySelectorAll('.app-card').forEach(c=>c.classList.toggle('dark'));
+  document.getElementById('tourTooltip').classList.toggle('dark');
+});
+
+/* ---------- Open App / Back ---------- */
+function openApp(id){
+  document.getElementById('appsMenu').style.display='none';
+  document.querySelectorAll('.app-module').forEach(m=>m.style.display='none');
+  document.getElementById(id).style.display='block';
+}
+function backToMenu(){
+  document.querySelectorAll('.app-module').forEach(m=>m.style.display='none');
+  document.getElementById('appsMenu').style.display='grid';
+}
+
+/* ---------- Feature Tour Carousel ---------- */
+const tourSteps=[
+  {id:'calendarModule',text:'Track your dates using Calendar 📅'},
+  {id:'notesModule',text:'Write ideas or reminders in Notes 📝'},
+  {id:'reminderModule',text:'Set Reminders ⏰ for tasks'},
+  {id:'goalsModule',text:'Track your Daily Goals 🎯'},
+];
+let tourIndex=0;
+function startFeatureTour(){
+  const tooltip=document.getElementById('tourTooltip');
+  if(tourSteps.length===0) return;
+  tooltip.style.display='block';
+  showTourStep();
+}
+function showTourStep(){
+  const tooltip=document.getElementById('tourTooltip');
+  const card=document.querySelector(`.app-card.${tourSteps[tourIndex].id.replace('Module','').toLowerCase()}`);
+  if(!card) return; // safety check
+  const rect=card.getBoundingClientRect();
+  tooltip.textContent=tourSteps[tourIndex].text;
+  tooltip.style.top=(rect.top-50+window.scrollY)+'px';
+  tooltip.style.left=(rect.left+window.scrollX)+'px';
+  tooltip.style.opacity='1';
+  setTimeout(()=>{
+    tourIndex++;
+    if(tourIndex<tourSteps.length){
+      showTourStep();
+    } else {
+      tooltip.style.opacity='0';
+      setTimeout(()=>tooltip.style.display='none',500);
+    }
+  },2000);
+}
+
+/* ---------- Calendar ---------- */
+function renderCalendar(){
+  const calendar=document.getElementById('calendar');
+  calendar.innerHTML='';
+  const now=new Date(), month=now.getMonth(), year=now.getFullYear(), today=now.getDate();
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const daysOfWeek=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  daysOfWeek.forEach(day=>{ const d=document.createElement('div'); d.textContent=day; d.style.fontWeight='bold'; calendar.appendChild(d); });
+  for(let i=0;i<firstDay;i++) calendar.appendChild(document.createElement('div'));
+  for(let d=1;d<=daysInMonth;d++){ const div=document.createElement('div'); div.textContent=d;
+    if(d===today) div.style.background='#007bff', div.style.color='#fff', div.style.borderRadius='4px';
+    calendar.appendChild(div);
+  }
+}
+renderCalendar();
+
+/* ---------- Notes, Reminders, Goals ---------- */
+function getData(key){return JSON.parse(localStorage.getItem(key)||'[]');}
+function saveData(key,data){localStorage.setItem(key,JSON.stringify(data));}
+
+function addNote(){const input=document.getElementById('noteInput'); if(!input.value.trim()) return;
+  const notes=getData('notes'); notes.push({text:input.value,completed:false}); saveData('notes',notes); input.value=''; renderNotes();}
+function toggleNote(i){const notes=getData('notes'); notes[i].completed=!notes[i].completed; saveData('notes',notes); renderNotes();}
+function deleteNote(i){const notes=getData('notes'); notes.splice(i,1); saveData('notes',notes); renderNotes();}
+function renderNotes(){const list=document.getElementById('notesList'); list.innerHTML=''; const notes=getData('notes');
+  notes.forEach((n,i)=>{ const li=document.createElement('li'); li.textContent=n.text; if(n.completed) li.classList.add('completed');
+    li.addEventListener('click',()=>toggleNote(i));
+    const btn=document.createElement('button'); btn.textContent='Delete'; btn.onclick=()=>deleteNote(i); li.appendChild(btn); list.appendChild(li); });
+  document.getElementById('notesStats').textContent=`Total: ${notes.length}`;}
+renderNotes();
+
+function addReminder(){ const input=document.getElementById('reminderInput'); if(!input.value.trim()) return;
+  const rem=getData('reminders'); rem.push({text:input.value,completed:false}); saveData('reminders',rem); input.value=''; renderReminders();}
+function toggleReminder(i){ const rem=getData('reminders'); rem[i].completed=!rem[i].completed; saveData('reminders',rem); renderReminders();}
+function deleteReminder(i){ const rem=getData('reminders'); rem.splice(i,1); saveData('reminders',rem); renderReminders();}
+function renderReminders(){ const list=document.getElementById('reminderList'); list.innerHTML=''; const rem=getData('reminders');
+  rem.forEach((r,i)=>{ const li=document.createElement('li'); li.textContent=r.text; if(r.completed) li.classList.add('completed');
+    li.addEventListener('click',()=>toggleReminder(i));
+    const btn=document.createElement('button'); btn.textContent='Delete'; btn.onclick=()=>deleteReminder(i); li.appendChild(btn); list.appendChild(li); });
+  document.getElementById('reminderStats').textContent=`Total: ${rem.length}`;}
+renderReminders();
+
+function addGoal(){ const input=document.getElementById('goalInput'); if(!input.value.trim()) return;
+  const goals=getData('goals'); goals.push({text:input.value,done:false}); saveData('goals',goals); input.value=''; renderGoals();}
+function toggleGoal(i){ const goals=getData('goals'); goals[i].done=!goals[i].done; saveData('goals',goals); renderGoals();}
+function deleteGoal(i){ const goals=getData('goals'); goals.splice(i,1); saveData('goals',goals); renderGoals();}
+function renderGoals(){ const list=document.getElementById('goalList'); list.innerHTML=''; const goals=getData('goals'); let completed=0;
+  goals.forEach((g,i)=>{ if(g.done) completed++; const li=document.createElement('li'); li.textContent=g.text; if(g.done) li.classList.add('completed');
+    li.addEventListener('click',()=>toggleGoal(i));
+    const btn=document.createElement('button'); btn.textContent='Delete'; btn.onclick=()=>deleteGoal(i); li.appendChild(btn); list.appendChild(li); });
+  document.getElementById('goalsStats').textContent=`Completed: ${completed}/${goals.length}`;}
+renderGoals();
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
